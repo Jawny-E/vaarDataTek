@@ -1,0 +1,21 @@
+//Definera konstanta for resten av oppgåva, desse tilsvarar ein pinne
+const int8_t EN1 = 11;
+const int8_t IN1 = 13;
+const int8_t IN2 = 12;
+
+void setup() { //Alle pinnane settast til output
+  pinMode(EN1, OUTPUT);
+  pinMode(IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+}
+
+void loop() {
+  digitalWrite(IN1,HIGH); //Setter ein input til høg og ein annan til låg
+  digitalWrite(IN2, LOW);
+
+  for (int8_t i = 30; i<70; i++){ //Skriver enable pinnen mellom 30-70, motoren går no jamt mellom forskjellige hastigheitar
+    analogWrite(EN1, i);
+    delay(100);
+    }
+
+}
