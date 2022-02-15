@@ -1,0 +1,244 @@
+/*
+Strukturen til spelet:
+1. Blå-led, "startmeny" ventar til begge spelarane trykker inn knappen sin samtidig
+2. Raud-led, ventefase, dersom ein trykkar inn knappen sin her tapar man og går tilbake til start
+3. Grønn-led, reaksjonsfase, den som trykker raskast her vinner spelet, går tilbake til start
+*/
+//Bestemmer navn for ledpinner
+const int redLed = 10;
+const int greenLed = 9;
+const int blueLed = 8;
+const int LedP1 = 6;
+const int LedP2 = 7;
+//Andre pinner
+const int buzzerPin = 11;//Buzzerpinne
+const int SW1 = 3;//Knapp spelar 1
+const int SW2 = 4;//Knapp spelar 2
+//andre variablar
+int winner = 0; //Helder vinnaren av spelet
+int winnerBeep = 750;// Held starttonen for vinn
+int fault = 0;//Held taparen av spelet
+int faultBeep = 200;
+unsigned long wait; //Desse brukast for millis funksjonen
+unsigned long now = 0;
+ //Held styr på case-strukturen
+int tid; //Held tilfeldig vente-intervall
+char inbyte='m';
+float differanse;
+float player1;
+float player2; 
+int color; 
+
+void fanfare(){ //Her er funksjonen for vinnarfanfare
+  for(int i=750; i<1300 ;i = i + 150){ //For løkka køyrer 3 gongar
+    if(winner==1){ //Vinnaren avgjer kva led-lampe som skal blinke
+      tone(buzzerPin, i); //Tonen blir høgare for kva iterasjon
+      digitalWrite(LedP1, HIGH); //Skru på led og buzzer
+      delay(300); //Bruker delay her fordi det fungerar like bra som millis i denne delen av koden
+      noTone(buzzerPin); // Gjør at buzzeren ikke lager lyd 
+      digitalWrite(LedP1, LOW); //Skru av led og buzzer
+      delay(300);}
+    if(winner==2){ //Likt innhald som forrige, berre for LedP2
+      tone(buzzerPin, i);
+      digitalWrite(LedP2, HIGH);
+      delay(300);
+      noTone(buzzerPin);
+      digitalWrite(LedP2, LOW);
+      delay(300);}
+  }
+}
+void feillyd(){ //Her er funksjonen for feillyd, veldig lik fanfare
+  for(int i=700; i > 200; i = i - 100){//for loopen køyrer 3 gongar
+    if(fault==1){ //Avgjer kva led som skal blinke
+      tone(buzzerPin, i); //Tonen går ned med 50 for kvar iterasjon
+      digitalWrite(LedP1, HIGH);//Skrur på led og buzzer
+      delay(200);
+      noTone(buzzerPin);
+      digitalWrite(LedP1, LOW);//Skrur av led og buzzer
+      delay(200);}
+    if(fault==2){//Innhaldet likt over men for LedP2
+      tone(buzzerPin, i);
+      digitalWrite(LedP2, HIGH);
+      delay(300);
+      noTone(buzzerPin);
+      digitalWrite(LedP2, LOW);
+      delay(300);}
+  }
+}
+
+void pluspoeng(){ //Funksjon som teller pluspoeng 
+  if(winner == 1){ //Dersom player 1 winner, inntreffer det under denne if setningen 
+    int _y = map(differanse, 0, 5000, 5, 0); // map-funksjon som tar hensyn til rekasjonstiden og ut i fra det gir poeng 
+    player1 = player1 + _y; //summerer resultat av forrige runde og det man fikk på den nåværende 
+  }
+  if(winner == 2){
+    int _y = map(differanse, 0, 5000, 5, 0);
+    player2 = player2 + _y;
+  }
+}
+
+void minuspoeng(){ //Funksjon som teller minuspoeng 
+if(fault == 1){ //Dersom fault inntreffer mister player 1 ett poeng
+    player1 --;
+  }
+  if(fault == 2){ //Dersom fault inntreffer mister player 2 ett poeng
+    player2 --;
+  }
+}
+
+  
+void setup(){ 
+//Avgjer kva pinner som er input og output
+ randomSeed(analogRead(A0));
+ pinMode(buzzerPin, OUTPUT);
+ pinMode(LedP1, OUTPUT);
+ pinMode(LedP2, OUTPUT);
+ pinMode(redLed, OUTPUT);
+ pinMode(greenLed, OUTPUT);
+ pinMode(SW1, INPUT);
+ pinMode(SW2, INPUT);
+ Serial.begin(9600); //Oppretter serialkommunikasjon med datamaskin
+}
+
+void loop(){ 
+    switch(inbyte){ //Bruker switch-case struktur for å realisere ulike stadier
+    case 'm': // Csen som skal reperenstere meny
+      if(player1 == 15 or player2 == 15){ //Dersom noen når 15 poeng avsluttes spillet og spilleren som vant gratuleres 
+        if(player1 == 5){
+          Serial.print("Du vant, gratulerer Player 1(Red) ");
+          }
+         else{
+          Serial.print("Du vant, gratulerer Player 2(Blue) ");
+         }
+        
+        Serial.print("Poengene er resatt");
+        player1 = player2 = 0;
+      }
+      //i meny caset er begge spiller leddene på 
+      digitalWrite(LedP1,HIGH); 
+      digitalWrite(LedP2,HIGH);
+      //printer ut hvilke knapper som står for hvilke funksjoner 
+      Serial.println(" 's' = Start spill");
+      Serial.println(" 'q' = Avslutt spill og se hvem som vant");
+      Serial.println(" 'r' = Nullstill poengene");
+      Serial.println(" ");
+      //RGB-en er slått av i meny caset
+      digitalWrite(blueLed, LOW);
+      digitalWrite(redLed, LOW);
+      digitalWrite(greenLed, LOW);
+      
+      //Evig løkke til spillerene skriver korrekt bokstaver til Serial monitor 
+      while(bool x = true){
+      if(inbyte == 'r' or inbyte == 's' or inbyte == 'q'){
+         break;
+        }
+       else{
+        delay(500);
+        inbyte = char(Serial.read());}
+       }
+       digitalWrite(LedP1,LOW);
+       digitalWrite(LedP2,LOW);
+        break;
+    case 's': //Startmodus
+        while(digitalRead(SW1)==HIGH or digitalRead(SW2)==HIGH){//Lyser blå til begge knappane trykkast ned på sammme tid
+          digitalWrite(greenLed, LOW); 
+          digitalWrite(redLed, LOW);
+          digitalWrite(blueLed, HIGH);}
+        digitalWrite(blueLed, LOW);//Skrur av blå led
+        inbyte = 'v'; //Går til case 2
+    case 'v': //Ventefase
+        digitalWrite(redLed, HIGH); //Skrur på raudt lys
+        tid = random(3000, 6000); //Avgjer kor lenge denne fasen skal vare
+        delay(500); //Venter litt, i tilfelle knappen ikkje er sluppe endå
+        wait = millis();//Setter wait og now til millis no
+        now = millis();
+        inbyte = 'd';//Neste case er 3, dersom det ikkje blir trykkt på knappen
+        while((now - wait) <= tid){ //So lenge vi er i ventefasen
+          if(digitalRead(SW1)==LOW){ //Dersom P1 trykkar inn knappen sin    
+            fault = 1; //Spelar 1 har fault
+            inbyte = 'm'; //Neste fase er 1
+            feillyd(); //Spelar feillyd
+            minuspoeng();
+            break;} //Går ut av loopen 
+          if(digitalRead(SW2)==LOW){ //Samme som forrige if-setning for spelar 2
+            fault = 2;
+            inbyte = 'm';
+            feillyd();
+            minuspoeng();
+            break;}
+           now = millis();} //Oppdaterar now for kvar runden 
+        break; //Går ut av case 2
+    case 'd'://
+        color = random(1,11);
+        if(color < 7){
+          int time = 5000;
+          wait = millis();//Setter wait og now til millis no
+          now = millis();
+          digitalWrite(redLed,LOW);
+          digitalWrite(greenLed, HIGH); //Skrur på grønn og raud av
+          while((now - wait) <= tid){//So lenge ingenting har blitt trykt "evig"{
+            if(digitalRead(SW1)==LOW){ //Dersom spelar 1 trykker knappen i denne fasen
+                winner = 1;//Winner = 1
+                inbyte = 'm'; //Gå tilbake til case 1
+                differanse = (now-wait);
+                fanfare(); //Spel fanfare
+                pluspoeng();
+                break; } //Gå ut av loopen
+            if(digitalRead(SW2)==LOW){ //Samme som forrige for spelar 2
+                winner = 2;
+                inbyte = 'm';
+                fanfare();
+                differanse = (now-wait);
+                pluspoeng();
+                break;}
+                now =millis();
+              }
+              }
+        else{
+          int time = 5000;
+          wait = millis();//Setter wait og now til millis no
+          now = millis();
+          while((now - wait) <= tid){
+            digitalWrite(redLed,LOW);
+            digitalWrite(blueLed, HIGH); //Skrur på grønn og raud av
+            if(digitalRead(SW1)==LOW){ //Dersom spelar 1 trykker knappen i denne fasen
+                fault = 1;//Winner = 1
+                feillyd(); //Spel fanfare
+                minuspoeng();
+                minuspoeng();
+                break; } //Gå ut av loopen
+            if(digitalRead(SW2)==LOW){ //Samme som forrige for spelar 2
+                fault = 2;
+  
+                feillyd();
+                minuspoeng();
+                minuspoeng();
+                break;}
+            now = millis();
+          }}
+        inbyte = 'm'; //Gå tilbake til case 1
+        break; //Går ut av case 3
+
+    case 'q':
+         Serial.println("Resultat:");
+         Serial.print("Player 1 (Red): ");
+         Serial.println(player1);
+
+         Serial.print("Player 2 (Blue): ");
+         Serial.println(player2);
+         Serial.println(" ");
+         
+         inbyte = 'm';
+         break;
+        
+     case 'r':
+          Serial.println("Nå er resultatet nullstilt");
+          player1 = 0;
+          player2 = 0;
+          inbyte = 'm';
+          
+
+    default: //Programmet byrjar alltid i case 1
+        inbyte = 'm'; 
+}
+}
