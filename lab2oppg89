@@ -1,0 +1,32 @@
+#include <Servo.h> //Inkludera servo biblioteket
+const int servoPin = 9; //Setter servopinnen til pinne 9
+const int8_t EN1 = 11; //Gjer klar variablane til DC-motoren
+const int8_t IN1 = 13;
+const int8_t IN2 = 12;
+
+Servo servo; //Startar servoen
+void setup() {
+  pinMode(EN1, OUTPUT); //Fikser pinMode for motoren
+  pinMode(IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+  servo.attach(servoPin); //Gjer servopinnen klar
+  pinMode(A0,INPUT); //A0 er input for fotomotstanden
+}
+
+void loop() {
+  int x = analogRead(A0); //Leser av fotomotstandpinnen
+  float y = map(x, 0, 1023, -100, 100); // Denne skal styre motoren
+  float z = map(abs(y), 0, 100, 0, 180); //Denne skal styre servoen tar inn verdien frå y og gjer den om til vinkel mellom 0 og 180
+  if (y<=0){ //Dersom y er mindre eller lik 0
+    digitalWrite(IN1, HIGH);//Setter pinne IN1 til høg og IN2 til låg
+    digitalWrite(IN2, LOW);
+    analogWrite(EN1,abs (y));//Setter EN1 til absoluttverdien av y
+    }
+  if (y>0){ //Dersom y er større enn 0
+    digitalWrite(IN1, LOW); //Setter IN1 og IN2 til det omvendte av forrige if-setning
+    digitalWrite(IN2, HIGH);
+    analogWrite(EN1,abs (y)); //Setter EN1 til absoluttverdien av y
+    } 
+  servo.write(z); //Setter servoen til z
+}
+
