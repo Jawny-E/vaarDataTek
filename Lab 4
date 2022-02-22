@@ -37,3 +37,80 @@ void loop() {
 }
 
 // Oppgave 2 
+
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+
+void setup() {
+  
+ buttonA.waitForButton();
+ delay(1000);
+}
+
+void venstre8ball(){
+  //Første sirkel 
+  for (int speed = 50; speed <= 300; speed = speed + 20)
+  {
+    motors.setLeftSpeed(speed);
+    delay(200);
+  }
+  for (int speed = 300; speed >= 0; speed = speed - 40)
+  {
+    motors.setLeftSpeed(speed);
+    delay(200);
+  }
+}
+
+void hoyre8ball(){
+  //Første sirkel 
+  for (int speed = 50; speed <= 300; speed = speed + 20)
+  {
+    motors.setRightSpeed(speed);
+    delay(200);
+  }
+  for (int speed = 300; speed >= 0; speed = speed - 40)
+  {
+    motors.setRightSpeed(speed);
+    delay(200);
+  }
+}
+
+void sirkelsammeretning(){
+for (int speed = 50; speed <= 300; speed = speed + 20)
+  {
+    motors.setRightSpeed(speed);
+    delay(200);
+  }
+  for (int speed = 300; speed >= 0; speed = speed - 40)
+  {
+    motors.setRightSpeed(speed);
+    delay(200);
+  }
+}
+
+
+void sirkelmotsattretning(){
+for (int speed = 50; speed <= 300; speed = speed + 20)
+  {
+    motors.setLeftSpeed(speed);
+    delay(200);
+  }
+  for (int speed = 300; speed >= 0; speed = speed - 40)
+  {
+    motors.setLeftSpeed(speed);
+    delay(200);
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+ venstre8ball();
+ hoyre8ball();
+ sirkelsammeretning();
+ sirkelmotsattretning();
+}
+
+// Oppgave 3
