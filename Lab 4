@@ -144,35 +144,37 @@ void loop() {
 
 // Oppgave 3
 
+//henter bibliotek for bilen
 #include <Wire.h>
 #include <Zumo32U4.h>
 
+//definerer variabler 
 Zumo32U4Motors motors;
 Zumo32U4ButtonA buttonA;
 Zumo32U4LineSensors linesensor;
 Zumo32U4LCD display;
 
 #define NUM_SENSORS 5
-uint16_t static lineSensorValues[NUM_SENSORS];
-int vent = 5000;
+uint16_t static lineSensorValues[NUM_SENSORS]; //deklarerer linsensorvalues
+int vent = 5000; 
 
 
 void setup() {
-  linesensor.initFiveSensors();
-  unsigned long tidno = millis();
-  unsigned long tidstartt = millis();
-  while(tidno - tidstartt <= vent){
-    linesensor.calibrate();
-    motors.setLeftSpeed(80);
-    motors.setRightSpeed(80);
-    tidno = millis();
+  linesensor.initFiveSensors(); //begynner linesensor
+  unsigned long tidno = millis(); // teller tiden
+  unsigned long tidstartt = millis(); //tiden før while løkken begynner
+  while(tidno - tidstartt <= vent){ // kjøres hvis diferansen mellom er mindre enn vent
+    linesensor.calibrate(); //kalliberer linesensor
+    motors.setLeftSpeed(80); //hasitighet på venste motor
+    motors.setRightSpeed(80); //hastighet på høyre motor
+    tidno = millis(); // tar tiden på nytt 
   }
 }
 
 void loop() {
-  int position = linesensor.readLine(lineSensorValues);
-   display.clear();
-   display.print((position));
+  int position = linesensor.readLine(lineSensorValues); //leser av lineSensorValue
+   display.clear(); //clear displayet 
+   display.print((position)); //skriver ut position
 }
 
 // Oppgave 4
