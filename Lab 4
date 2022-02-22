@@ -1,40 +1,38 @@
 // Oppgave 1
 
+//Inkludera naudsynte bibliotek
 #include <Zumo32U4.h>
 #include <Wire.h>
 
+//Naudsynte variabler
 Zumo32U4Buzzer buzzer;
 Zumo32U4ButtonA buttonA;
-Zumo32U4ButtonB buttonB;
-Zumo32U4ButtonC buttonC;
 Zumo32U4LCD display;
 
+//Funksjonen for blinking og buzzer
 void blinkg(){
-    buzzer.playFrequency(440, 500, 15);
+    buzzer.playFrequency(440, 500, 15); //Skrur på buzzeren
+    for(int i=0;i<3;i++){
     ledYellow(1);
     delay(500);
     ledYellow(0);
-    delay(500);
-    ledYellow(1);
-    delay(500);
-    ledYellow(0);
+    delay(500);}
 }
 
 void setup() {
   display.clear();
-  display.print(F("Gruppe 1..."));
-
-  buttonA.waitForButton();
+  display.print(F("Gruppe 1...")); //Viser ein melding på displayet
+  buttonA.waitForButton(); //Knappen skal brukast til å vente på trykk
 }
 
 void loop() {
-  if (buttonA.getSingleDebouncedPress())
+  if (buttonA.getSingleDebouncedPress()) //Dersom knappen blir trykt 
   {
-    blinkg();   
+    blinkg(); //Kjør blinking-funksjonen
   }
   else
   {
-    ledYellow(0);
+    ledYellow(0); //Viss ikkje er LED-en avskrudd
   }
 }
 
