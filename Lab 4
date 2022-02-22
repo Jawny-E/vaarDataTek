@@ -1,0 +1,41 @@
+// Oppgave 1
+
+#include <Zumo32U4.h>
+#include <Wire.h>
+
+Zumo32U4Buzzer buzzer;
+Zumo32U4ButtonA buttonA;
+Zumo32U4ButtonB buttonB;
+Zumo32U4ButtonC buttonC;
+Zumo32U4LCD display;
+
+void blinkg(){
+    buzzer.playFrequency(440, 500, 15);
+    ledYellow(1);
+    delay(500);
+    ledYellow(0);
+    delay(500);
+    ledYellow(1);
+    delay(500);
+    ledYellow(0);
+}
+
+void setup() {
+  display.clear();
+  display.print(F("Gruppe 1..."));
+
+  buttonA.waitForButton();
+}
+
+void loop() {
+  if (buttonA.getSingleDebouncedPress())
+  {
+    blinkg();   
+  }
+  else
+  {
+    ledYellow(0);
+  }
+}
+
+// Oppgave 2 
