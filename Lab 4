@@ -143,3 +143,36 @@ void loop() {
 }
 
 // Oppgave 3
+
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+Zumo32U4LineSensors linesensor;
+Zumo32U4LCD display;
+
+#define NUM_SENSORS 5
+uint16_t static lineSensorValues[NUM_SENSORS];
+int vent = 5000;
+
+
+void setup() {
+  linesensor.initFiveSensors();
+  unsigned long tidno = millis();
+  unsigned long tidstartt = millis();
+  while(tidno - tidstartt <= vent){
+    linesensor.calibrate();
+    motors.setLeftSpeed(80);
+    motors.setRightSpeed(80);
+    tidno = millis();
+  }
+}
+
+void loop() {
+  int position = linesensor.readLine(lineSensorValues);
+   display.clear();
+   display.print((position));
+}
+
+// Oppgave 4
