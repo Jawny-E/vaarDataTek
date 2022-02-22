@@ -38,79 +38,108 @@ void loop() {
 
 // Oppgave 2 
 
-#include <Wire.h>
-#include <Zumo32U4.h>
+#include <Wire.h> //henter bibliotek for bilen
+#include <Zumo32U4.h> //henter bibliotek for bilen
 
-Zumo32U4Motors motors;
-Zumo32U4ButtonA buttonA;
+Zumo32U4Motors motors; //setter variable for motorene
+Zumo32U4ButtonA buttonA; //setter variabler  for buttonA
 
 void setup() {
   
- buttonA.waitForButton();
- delay(1000);
+ buttonA.waitForButton(); //venter for at buttonA blir presset 
+ delay(1000); //venter 
 }
 
 void venstre8ball(){
-  //Første sirkel 
+  //Sirkel til venstre
+  
   for (int speed = 50; speed <= 300; speed = speed + 20)
+  //begynner med start speed på 50 og øker med 20 til speed har nådd 300.
+  //bilen akselerer 
   {
-    motors.setLeftSpeed(speed);
+    motors.setLeftSpeed(speed); //setter hastigheten ved hjelp av for løkken; venstre motor
     delay(200);
+    
   }
   for (int speed = 300; speed >= 0; speed = speed - 40)
+   //begynner med start speed på 300 og senker med 20 til speed har nådd 0.
+   // //bilen deakselerer til 0 
   {
-    motors.setLeftSpeed(speed);
+  
+    motors.setLeftSpeed(speed); //setter hastigheten ved hjelp av for løkken; venstre motor
     delay(200);
   }
+  //har nå fullført en hel runde på ca 360 grader 
 }
 
 void hoyre8ball(){
-  //Første sirkel 
+  //Sirkel til høyre 
   for (int speed = 50; speed <= 300; speed = speed + 20)
+   //begynner med start speed på 50 og øker med 20 til speed har nådd 300.
+  //bilen akselerer 
   {
-    motors.setRightSpeed(speed);
+    motors.setRightSpeed(speed); //setter hastigheten ved hjelp av for løkken; høyre motor
     delay(200);
   }
   for (int speed = 300; speed >= 0; speed = speed - 40)
+     //begynner med start speed på 300 og senker med 20 til speed har nådd 0.
+  //bilen deakselerer til 0 
   {
-    motors.setRightSpeed(speed);
+    motors.setRightSpeed(speed); //setter hastigheten ved hjelp av for løkken; høyre motor
     delay(200);
   }
+   //har nå fullført en hel runde på ca 360 grader 
 }
 
 void sirkelsammeretning(){
-for (int speed = 50; speed <= 300; speed = speed + 20)
+  //Sirkel til høyre 
+  for (int speed = 50; speed <= 300; speed = speed + 20)
+   //begynner med start speed på 50 og øker med 20 til speed har nådd 300.
+  //bilen akselerer 
   {
-    motors.setRightSpeed(speed);
+    motors.setRightSpeed(speed); //setter hastigheten ved hjelp av for løkken; høyre motor
     delay(200);
   }
   for (int speed = 300; speed >= 0; speed = speed - 40)
+     //begynner med start speed på 300 og senker med 20 til speed har nådd 0.
+  //bilen deakselerer til 0 
   {
-    motors.setRightSpeed(speed);
+    motors.setRightSpeed(speed); //setter hastigheten ved hjelp av for løkken; høyre motor
     delay(200);
+    
+   //har nå fullført en hel runde på ca 360 grader 
   }
-}
+
 
 
 void sirkelmotsattretning(){
-for (int speed = 50; speed <= 300; speed = speed + 20)
+  //Sirkel til venstre
+  
+  for (int speed = 50; speed <= 300; speed = speed + 20)
+  //begynner med start speed på 50 og øker med 20 til speed har nådd 300.
+  //bilen akselerer 
   {
-    motors.setLeftSpeed(speed);
+    motors.setLeftSpeed(speed); //setter hastigheten ved hjelp av for løkken; venstre motor
     delay(200);
+    
   }
   for (int speed = 300; speed >= 0; speed = speed - 40)
+   //begynner med start speed på 300 og senker med 20 til speed har nådd 0.
+   // //bilen deakselerer til 0 
   {
-    motors.setLeftSpeed(speed);
+  
+    motors.setLeftSpeed(speed); //setter hastigheten ved hjelp av for løkken; venstre motor
     delay(200);
   }
+  //har nå fullført en hel runde på ca 360 grader 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
- venstre8ball();
- hoyre8ball();
- sirkelsammeretning();
- sirkelmotsattretning();
+ venstre8ball(); //kjører venstre sirkel
+ hoyre8ball(); // kjører høyre sirkel 
+ sirkelsammeretning(); //kjører høyre sirkel
+ sirkelmotsattretning(); // kjører høyre sirkel 
 }
 
 // Oppgave 3
