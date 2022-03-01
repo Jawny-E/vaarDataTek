@@ -1,0 +1,128 @@
+//Speedometer test + batteri kapasitet 
+
+//Importering av nødvendige bibliotek
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+Zumo32U4ButtonA buttonA;
+Zumo32U4ButtonA buttonC;
+Zumo32U4Encoders encoders;
+Zumo32U4Motors motors;
+Zumo32U4LCD display;
+
+int countspermeter = 8195;
+unsigned long now;
+unsigned long wait;
+float tid = 200;
+float cap = 1200;//mAh
+
+float use_battery(){
+  float x = hurtigheitms();
+  cap = cap - (2*x + 10);
+  return cap;
+  }
+float hurtigheitms(){
+  encoders.getCountsAndResetRight();
+  encoders.getCountsAndResetLeft();
+  now = millis();
+  wait = millis();
+  while(now-wait < tid){
+    now = millis();
+    } 
+  float x = (encoders.getCountsLeft() + encoders.getCountsRight()) / 2;
+  float distance = (x/countspermeter)*100;
+  float hurtigheit = distance / (tid/1000);
+  return hurtigheit;  
+  }
+
+void engine(){
+  if (buttonA.getSingleDebouncedPress()){
+  for(int i = 20; i < 500; i = i + 10){
+   motors.setLeftSpeed(i); 
+   motors.setRightSpeed(i); 
+   delay(50);
+  }
+  if (buttonC.getSingleDebouncedPress()){
+   motors.setLeftSpeed(0); 
+   motors.setRightSpeed(0); 
+  }
+  }
+
+}
+ 
+
+void setup() {
+Serial.begin(9600);
+display.clear();
+buttonA.waitForButton();
+buttonC.waitForButton();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  float x = hurtigheitms();
+  engine();
+  if(x>0){
+    float battery = use_battery();
+    display.gotoXY(0, 0);
+    display.print(battery);
+    if(battery<= 0){
+      while(true){
+        delay(500);
+        display.print("U fucked up");
+        delay(500);
+        display.clear();
+        motors.setLeftSpeed(0); 
+        motors.setRightSpeed(0); 
+        }
+      }
+    
+    }
+}
+
+//  Metermål 
+
+//Importering av nødvendige bibliotek
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+// Definerer maksimalhastigheten til zumo-bilen
+const uint16_t maxSpeed = 300;
+
+Zumo32U4Buzzer buzzer;
+Zumo32U4LineSensors lineSensors;
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+Zumo32U4LCD display;
+Zumo32U4Encoders encoders;
+Zumo32U4ButtonC buttonC;
+
+uint32_t x; 
+uint32_t y; 
+
+void counting(){
+   if (buttonC.getSingleDebouncedPress()){
+    x = encoders.getCountsAndResetLeft ();
+    y = encoders.getCountsAndResetRight ();
+    display.clear();
+  }
+  
+  x = encoders.getCountsLeft();
+  y = encoders.getCountsRight();
+  display.gotoXY(0, 0);
+  display.print("L:");
+  display.print(x);
+  display.gotoXY(0, 1);
+  display.print("R:");
+  display.print(y); 
+  }
+ 
+void setup() {
+display.clear();
+encoders.init();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+counting();
+}
