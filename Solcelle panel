@@ -1,0 +1,63 @@
+/*
+DETTE ER ANBEFALT OPPSETT 
+
+#include<Servo.h>
+
+int vinkel = 90;
+Servo servo;
+unsigned long lastMillis = 0; //teller forrige tid 
+const int period = VELG PERIODE; // periode
+
+void setup() {
+  pinMode(ANALOG_PIN , INPUT); //LDR 1
+  pinMode(ANALOG_PIN, INPUT); //LDR 2
+  Serial.begin(9600);
+  servo.attach(9); //SERVO
+  
+}
+*/
+
+
+void Solcelle_panel() //funksjon for solcelle panel {
+  unsigned long currentMillis = millis(); //tiden nå 
+  
+  
+  int A = analogRead(A0); // leser A photoresistor
+  int B = analogRead(A1); // Leser B photoresistro
+
+  while(A!=B){
+
+    unsigned long currentMillis = millis(); //tiden nå 
+
+    int A = analogRead(A1); 
+    int B = analogRead(A0);
+
+    
+  if(currentMillis-lastMillis> period) {
+    
+  Serial.println(A); //print A
+  Serial.println(B); //print B
+  Serial.println(vinkel); //print vinkel
+  Serial.println(" ");
+  lastMillis = millis(); //oppdatere tiden 
+   }
+
+    if(A>B){ //hvis A > b
+      
+      if(vinkel < 180){ // servoen kan ikke rotere mer enn 180 grader 
+        vinkel += 1; //oppdaterer vinkelen med + 1 grad så lenge A != B
+        }
+ 
+      servo.write(vinkel); // Servo skriver ut vinkelen
+      }
+      
+      
+    if(A<B) { 
+    
+      if(vinkel > 0){ //servoen kan ikke være mindre enn 0 grader 
+        vinkel = vinkel-1; //oppdaterer vinkelen med - 1 grad så lenge A != B
+        }     
+          servo.write(vinkel); // Servo skriver ut vinkelen
+      }
+      }
+      }
