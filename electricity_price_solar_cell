@@ -1,7 +1,7 @@
 /* strøm fra solceller 
  *  funksjon av pengene 
  *  photoresistor måler sol
- *  Dyrer strømpriser når det er mørkt
+ *  Strømprisene utgjør høyere beløp når det er mørkt
  */
 
 int period = 100; //intervall for endring av pris
@@ -17,7 +17,7 @@ int Percent; //Prosenten som skal vi få ut av LDRread
 
 void setup()
 {
- Serial.begin(9600); //Begynner serial moniter 
+ Serial.begin(9600); //Begynner serial monitor 
  pinMode(LDR, INPUT); // LDR er en input verdi
 }
 
@@ -26,16 +26,16 @@ void electricity_price_solar_cell ()
 {
   LDRread = analogRead(LDR); //Leser av LDR verid
   unsigned long currentMillis = millis(); //tiden nå 
-  Percent = map(LDRread, 0, 1023, 100, 0); //legger om intervallet fra LDR til en intervall mellom 0 og 100
+  Percent = map(LDRread, 0, 1023, 100, 0); //legger om intervallet fra LDR til et intervall mellom 0 og 100
   // prisen er dyrest når det er lite lys 
-  Solar_Price = Percent * price_percent; //regner ut prisen for solcelle panelet 
+  Solar_Price = Percent * price_percent; //regner ut prisen for solcellepanelet 
   
   
-  if (currentMillis - lastMillis >= period) // får en ny pris ved når tiden har passert perioden{
+  if (currentMillis - lastMillis >= period) // får en ny pris når tiden har passert perioden{
   lastMillis = currentMillis; 
   Serial.println (Solar_Price);
 
-  // Skal legge inn prisene på netside og den skal trekker fra solar pris fra zaldo når bilen lades. 
+  // Skal legge inn prisene på netside og den trekke fra solar pris fra zaldo når bilen lades. 
   }
  
 
