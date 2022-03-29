@@ -1,0 +1,53 @@
+#include <Zumo32U4.h>
+
+Zumo32U4LCD lcd;
+Zumo32U4ProximitySensors proxSensors;
+Zumo32U4Motors motors;
+
+int i;
+int speed  = 100;
+
+// --- Setup function
+void setup() {
+  // Get the proximity sensors initialized
+  proxSensors.initThreeSensors();
+}
+
+// --- Main program loop
+void loop() {
+
+    proxSensors.read();    
+ 
+  int center_left_sensor = proxSensors.countsFrontWithLeftLeds();
+  int center_right_sensor = proxSensors.countsFrontWithRightLeds();
+
+
+  Serial.println(speed);
+  while( speed < 200 and (center_right_sensor < 6 or center_right_sensor < 6)){
+    speed = speed + 20;
+    motors.setSpeeds(speed,speed);
+  }
+  
+
+
+  // Update the display
+  lcd.gotoXY(0, 1);
+
+  lcd.print(center_left_sensor);
+  lcd.print(" ");
+  lcd.print(center_right_sensor);
+  lcd.print(" ");
+
+   while (( center_left_sensor = 6 or center_right_sensor = 6) and (speed > 0 )) { 
+          //forsøker å stoppe dersom den ser en objekt
+
+      Serial.println("HEI");
+      speed = speed - 5 ;
+      motors.setSpeeds(speed,speed);
+
+   proxSensors.read();
+   center_left_sensor = proxSensors.countsFrontWithLeftLeds();
+   center_right_sensor = proxSensors.countsFrontWithRightLeds();
+        
+        }   
+}
