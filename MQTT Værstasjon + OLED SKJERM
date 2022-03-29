@@ -2,13 +2,20 @@
 // SCL = D22
 // SDA = D21
 
-//Impotering av nødvendige bibliotek 
+//AHT10 BIBLIOTEK 
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_AHT10.h>
 Adafruit_AHT10 aht;
+
+//OLED SKJERM BIBLIOTEK 
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128 // OLED display vidde, i pixler
+#define SCREEN_HEIGHT 32 //
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // Replace the next variables with your SSID/Password combination
 const char* ssid = "ThisIsANetwork";
@@ -62,6 +69,15 @@ void setup() {
     while (1) delay(10);
   }
   Serial.println("AHT10 found");
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Addresserer 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);}
+
+  display.clearDisplay(); // Clearer skjerm 
+  display.setTextSize(1); //Velger størrelse på tekst
+  display.setTextColor(WHITE); // Velger farge på tekst 
+  display.setCursor(0, 10); //
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
@@ -116,9 +132,11 @@ void loop() {
     reconnect();
   }
   client.loop();
-
+  
   long now = millis();
   if (now - lastMsg > 5000) {
+    display.clearDisplay(); //Rydder skjerm 
+    display.setCursor(0, 10);
     lastMsg = now;
     sensors_event_t humidity, temp;
     int humidity_value;
@@ -134,6 +152,10 @@ void loop() {
     dtostrf(temperature, 1, 2, tempString);
     Serial.print("Temperature: ");
     Serial.println(tempString);
+    display.setCursor(0, 10);
+    display.print(tempString);
+    display.print(" Celcius");
+    display.display();
     client.publish("esp32/temperature", tempString);
 
     humidity_value = humidity.relative_humidity;
@@ -143,6 +165,10 @@ void loop() {
     dtostrf(humidity_value, 1, 2, humString);
     Serial.print("Humidity: ");
     Serial.println(humString);
+    display.setCursor(0, 20);
+    display.print(humString);
+    display.print(" %");
+    display.display();
     client.publish("esp32/humidity", humString);
   }
 }
