@@ -28,7 +28,7 @@ int value = 0;
 const int ledPin = 4;
 
 void setup_wifi() {
-  delay(10);
+  delay(500);
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
