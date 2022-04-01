@@ -32,7 +32,8 @@ char msg[50];
 int value = 0;
 
 // LED Pin
-const int ledPin = 4;
+const int vifte = 4;
+const int ledPin = 5;
 
 void setup_wifi() {
   delay(500);
@@ -62,7 +63,7 @@ void setup() {
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
-  pinMode(ledPin, OUTPUT);
+  pinMode(vifte, OUTPUT);
 
     if (! aht.begin()) {
     Serial.println("Could not find AHT10? Check wiring");
@@ -152,11 +153,19 @@ void loop() {
     dtostrf(temperature, 1, 2, tempString);
     Serial.print("Temperature: ");
     Serial.println(tempString);
-    display.setCursor(0, 10);
+    display.setCursor(0, 0);
     display.print(tempString);
     display.print(" Celcius");
     display.display();
     client.publish("esp32/temperature", tempString);
+    
+    //Tar viften på hvis temperaturen overstiger 25 grader
+    if(temperature > 25){
+      digitalWrite(vifte, HIGH);
+    }
+    else{
+      digitalWrite(vifte, LOW);
+    }
 
     humidity_value = humidity.relative_humidity;
     
@@ -165,10 +174,13 @@ void loop() {
     dtostrf(humidity_value, 1, 2, humString);
     Serial.print("Humidity: ");
     Serial.println(humString);
+    
+    //Displayer verdiene på skjermen
     display.setCursor(0, 20);
     display.print(humString);
     display.print(" %");
     display.display();
     client.publish("esp32/humidity", humString);
   }
+  delay(500);
 }
