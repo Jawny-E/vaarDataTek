@@ -1,0 +1,111 @@
+# vaarDataTek
+
+//Importering av nødvendige bibliotek
+#include <Arduino.h>
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+// Definerer maksimalhastigheten til zumo-bilen
+const uint16_t maxSpeed = 400;
+
+Zumo32U4Buzzer buzzer;
+Zumo32U4LineSensors lineSensors;
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+
+uint16_t cont;
+
+int SpeedDifference;
+
+int leftSpeed = 200;
+int rightSpeed = 200;
+
+
+unsigned int sensorValues[3];  //lagrer de 3 sensorsveridene i en array  
+
+void calibrate(){
+  for (cont = 0; cont < 100; cont++){
+    delay(100);
+    lineSensors.calibrate();
+
+    if (cont >= 25 || cont >= 85) {
+      leftSpeed = -200;
+      rightSpeed = 200;
+      motors.setSpeeds(leftSpeed, rightSpeed);
+      }
+    
+    if (20 >= cont || cont <= 80) {
+      leftSpeed = -200;
+      rightSpeed = 200;
+      motors.setSpeeds(leftSpeed, rightSpeed);
+      }
+
+      delay(100);
+      motors.setSpeeds(0,0);
+    }}
+
+
+void setup (){
+  Serial.begin(9600);
+  Serial.println("Start");
+  lineSensors.initThreeSensors();
+  motors.setSpeeds(0,0);
+  calibrate();
+  Serial.println("calibrate");
+  motors.setSpeeds(0,0);
+} 
+
+// Vil ha posisjon_verdi på  1000 til hver tid 
+//farten på left M og right M skal tilpasses slikt at posisjon_verdi  er 1000
+ 
+void loop (){
+
+uint16_t posisjons_verdi = lineSensors.readLine(sensorValues); 
+//leser av linje verdien 
+// 0 = linje under 1. sensor
+//1000 = linje under center sensor
+//2000 = linje under 3. sensor 
+
+Serial.println(posisjons_verdi);
+Serial.println(" ");
+
+  while ((posisjons_verdi > 1000) && (leftSpeed < 400)){
+    //så lenge posisjons_veriden er over 1000 så ligger linja mot høyre sensor
+    //vil øke venstre motor hastighet, svinge til høyre
+    // samt senker høyre motor hastighetet slik at linja kommer til 1000 
+    rightSpeed = rightSpeed - 1;
+    leftSpeed = leftSpeed + 1;    
+    Serial.println( "Venstre");
+    motors.setSpeeds(leftSpeed, rightSpeed);
+    uint16_t posisjons_verdi = lineSensors.readLine(sensorValues);
+    Serial.println(posisjons_verdi);
+    delay(500);
+  }
+  while ((posisjons_verdi < 1000) && (rightSpeed < 400)){
+    //så lenge posisjons_veriden er under 1000 så ligger linja mot venstre sensor
+    //vil øke høyre motor hastighet, svinge til mot venstre
+    // samt senker høyre motor hastighetet slik at linja kommer til 1000 
+    leftSpeed = leftSpeed - 1;
+    rightSpeed = rightSpeed + 1 ;
+    Serial.println( "Høyre");
+    Serial.println(rightSpeed);
+    motors.setSpeeds(leftSpeed, rightSpeed); 
+    uint16_t posisjons_verdi = lineSensors.readLine(sensorValues); 
+    Serial.println(posisjons_verdi);   
+    delay(500);
+
+  }
+
+  // når posisjons_veridiene vipper rundt 1000 så er hastighets endringen 
+  //lite at de skal ikke merkes 
+
+delay(500);
+
+if (rightSpeed ==400) { 
+  // må bare nullstille hvis farten blir maxSpeed
+  //ikke en god løsning, kommer ikke på noe annet for øyeblikket 
+  rightSpeed = 0;
+}
+if (leftSpeed ==  400); 
+  leftSpeed = 0;
+}
