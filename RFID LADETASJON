@@ -1,0 +1,61 @@
+#include <SPI.h>
+#include <MFRC522.h>
+
+#define RST_PIN         22         
+#define SS_PIN          5   
+MFRC522 mfrc522(SS_PIN, RST_PIN); 
+int cases = 1;
+
+void setup() {
+  Serial.begin(9600);
+  SPI.begin();
+  mfrc522.PCD_Init();
+}
+
+void loop() {
+  switch(cases){
+    case 1: 
+    {
+      if ( ! mfrc522.PICC_IsNewCardPresent()) 
+    {
+      return;
+    }
+    // Velger et av kortene 
+    if ( ! mfrc522.PICC_ReadCardSerial()) 
+    {
+      return;
+    }
+    //Oppretter en plass vi kan lagre avlesingene fra readeren
+    String innhold= "";
+    byte letter;
+    for (byte i = 0; i < mfrc522.uid.size; i++) 
+    {
+       innhold.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+       innhold.concat(String(mfrc522.uid.uidByte[i], HEX));
+    }
+    Serial.println();
+    innhold.toUpperCase();
+    if (innhold.substring(1) == "C2 95 A5 3D") //UID-taggen til kortet på zumobilen 
+    {
+      Serial.println("Velkommen Gruppe 1");
+      Serial.println();
+      delay(200);
+      cases = 2;
+      break;
+    }
+   else {
+      Serial.println("Ikke registrert kunde");
+      delay(1000);
+      cases = 1;
+      break;
+   }
+   
+  }
+   case 2:
+   {
+     Serial.println("MOTAS");
+     delay(5000);
+     cases = 1;
+   }
+} 
+  }
