@@ -1,0 +1,105 @@
+ 
+//Importering av nødvendige bibliotek
+#include <Wire.h>
+#include <Zumo32U4.h>
+#include <Zumo32U4IMU.h>
+
+// Definerer maksimalhastigheten til zumo-bilen
+const int16_t maxSpeed = 190; //pleide å være 400
+
+Zumo32U4Motors motors;
+Zumo32U4Encoders encoders;
+Zumo32U4IMU imu;
+Zumo32U4LCD display;
+
+
+uint16_t cont = 0;
+uint16_t lastUpdate = 0;
+int16_t lastError = 0; //Variabel for korrigering av feilbevegelse 
+int x;
+int hurtighet;
+unsigned int lineSensorValues[2];
+float gyroOffsetX; //henter X aksen på gyro
+const int period = 100;
+unsigned long lastMillis = 0;
+int countspermeter = 8195;
+unsigned long now;
+unsigned long wait;
+int StopMillis = 0;
+int strom;
+int forrige_tid = 0;
+int battery;
+int leftSpeed;
+int rightSpeed;
+
+float use_battery(){
+  strom = strom - ( hurtighet - 20);
+  return strom;
+  }
+
+void BatteryPROCENT (){
+  int batteryPROCENT = (battery/strom)*100;
+  return batteryPROCENT;
+}
+
+void SHORT_RECHARGE() {
+  leftSpeed = 0;
+  rightSpeed = 0; 
+  motors.setSpeeds(leftSpeed, rightSpeed);
+  SHAKER(); 
+}
+
+
+void SHAKER () {
+  float angle = 0; 
+  imu.init();
+  bool gyroDataReady();
+  
+  while(true) {
+    imu.readGyro();
+    uint16_t tid = micros();
+    uint16_t delta_T = tid - forrige_tid;
+    uint16_t forige_tid = tid;
+    int new_angle = (gyroOffsetX - (float)imu.g.x) * 70*delta_T/ 1000.0; 
+    uint16_t delta_A = new_angle - angle;
+    uint16_t angle = new_angle;
+    while (delta_A != 0) {
+     battery += 20; 
+     while (battery <= 400) {
+     break; 
+     }}}}
+ 
+ void setup() {
+    Serial.begin(9600);
+  display.clear();
+  motors.setSpeeds(0,0);
+ }
+ void loop() { 
+
+ unsigned long  currentMillis = millis();
+ 
+  
+  int Left_encoder = encoders.getCountsRight(); //Kan få overflow  (over 16 bit)
+  int Right_encoder = encoders.getCountsLeft();
+
+  unsigned long StartMillis = millis();
+
+  float  x = ((Left_encoder + Right_encoder) / 2);
+  float  distance = (x/countspermeter)*100; //måler distanse den har kjørt i cm. 
+  float hurtighet = distance/(StartMillis - currentMillis);
+  if (hurtighet > 0) {
+    float battery = use_battery();
+     BatteryPROCENT ();
+     display.clear();
+     display.print(BatteryPROCENT);
+    if (BatteryPROCENT <= 5){
+      while(true){
+        display.clear();
+        display.print("LOW BATTERY"); 
+        SHORT_RECHARGE();
+        delay(200);
+        if (battery <= 1) {
+          display.clear();
+          display.print("DEAD BATTERY");
+        } } } }
+ }
