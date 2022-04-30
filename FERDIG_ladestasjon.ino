@@ -330,4 +330,6 @@ Gjere nokre av desse om til funksjonar:
 Rydde i ka som treng å være globale variablar og kva som kan være lokalt
 
 Navngivinga er ganske innafor, men bør sjåast gjennom
+
+Kan legge til at om percentage er 0, so kan kontoen bli negativ
 */
