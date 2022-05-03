@@ -13,6 +13,7 @@ Raud led-pinne 4
 Grønn led-pinne 2
 Potmeter-pinne 34
 Pull-down knapp pinne 33
+Servo-pinne 12
 Anbefalar å koble ein LED til målepinnen til potmeteret,
 for å gje kjøparen visuell input
 
@@ -34,19 +35,21 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
+#include <Servo.h>
 
 // Lagrer SSID og passord på nettverket vi benytter oss av i to konstanter 
 const char* ssid = "ThisIsANetwork";
 const char* password = "ThisIsPassword";
 // Lagrer IP-adressen til MQTT-brokeren vi benytter oss av 
-const char* mqtt_server = "192.168.32.216";
+const char* mqtt_server = "192.168.231.216";
 
-// Setter opp Wifi og PubSubClient
-WiFiClient espClient;
-PubSubClient client(espClient);
+// Setter opp Wifi, PubSubClient og servo
+WiFiClient espLADEClient;
+PubSubClient client(espLADEClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
+Servo servo;
 
 /*Funksjon for å sette opp Wifi*/
 void setup_wifi() { 
@@ -69,12 +72,13 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-//Bestemmer navn for ledpinner, potentiometerpinne og knapp pinne
+//Bestemmer navn for ledpinner, potentiometerpinne, servo og knapp pinne
 const int redLed = 4;
 const int greenLed = 2;
 const int yellowLed = 13;
 const int potPin = 34;
 const int SW1 = 33;
+const int servoPin = 12;
 /*Ventevariablar, kan kanskje omgjerast til lokale?*/
 unsigned long wait;
 unsigned long now = 0;
@@ -90,8 +94,7 @@ void setup() {
   //Led-pinnene er output
   pinMode(redLed,OUTPUT);
   pinMode(yellowLed,OUTPUT);
-  pinMode(greenLed,OUTPUT);
-  
+  pinMode(greenLed,OUTPUT);  
   //Knapp og pot-meter er input noder
   pinMode(SW1,INPUT);
   pinMode(potPin, INPUT);
@@ -100,7 +103,8 @@ void setup() {
   //Starter Serial Peripheral Interface og setter opp rfid
   SPI.begin();
   mfrc522.PCD_Init();
-
+  //Setter opp servo
+  servo.attach(servoPin);
   //Caller setup wifi
   setup_wifi();
   //Setter opp mqtt server
@@ -117,22 +121,28 @@ void callback(char* topic, byte* message, unsigned int length) {
       messageTemp += (char)message[i];} //Gjer meldinga om til ein string som kan lesast
     konto = messageTemp.toInt(); //oppdaterar konto med int versjonen av meldinga
     Serial.println(konto);
-    }
+    } 
   if(String(topic) == "esp32/solcelle"){ //Om meldinga kjem på topicet solcelle
     Serial.println("Henta straumpris");
     String messageTemp;
-    for (int i = 0; i < length; i++) { //Gjer meldinga om til ein string som kan lesast
+    for (int i = 0; i < length; i++) {
       messageTemp += (char)message[i];}
-    strompris = messageTemp.toInt();//oppdaterar straumpris med int versjonen av meldinga
+    strompris = messageTemp.toInt();
     Serial.println(strompris);
     }
   if(String(topic) == "esp32/batteri"){ //Om meldinga kjem på batteri topic
     Serial.println("Henta resterande batteri: ");
     String messageTemp;
-    for (int i = 0; i < length; i++) {//Gjer meldinga om til ein string som kan lesast
+    for (int i = 0; i < length; i++) {
       messageTemp += (char)message[i];}
-    batteri = messageTemp.toInt(); //oppdaterar batteri med int versjonen av meldinga
+    batteri = messageTemp.toInt();
     Serial.println(batteri);
+    if(batteri < 40){
+      servo.write(0);
+      }
+    else{
+      servo.write(90);
+      }
     }
 }
 
@@ -195,6 +205,11 @@ void loop(){
       if(now1 - wait1 > period){
           client.publish("esp32/requestKonto", "40");//Verdien vi publisera er irrelevant
           client.publish("esp32/requestBattery", "40");
+          int x = servo.read();//Leser av vinkelen til servoen
+          char vinkelString[8]; 
+          dtostrf(x, 1, 2, vinkelString);
+          client.publish("esp32/bomVinkel",vinkelString);//Publiserer vinkelinfoen
+          
           wait1 = millis();}
       
       if ( ! mfrc522.PICC_IsNewCardPresent()){
@@ -214,7 +229,7 @@ void loop(){
       }
       Serial.println();
       innhold.toUpperCase();
-      if (innhold.substring(1) == "C2 95 A5 3D"){ //UID-taggen til kortet på zumobilen {
+      if (innhold.substring(1) == "B2 B9 2C 3D"){ //UID-taggen til kortet på zumobilen {
         Serial.println("Velkommen gruppe 1");
         cases = 2; //Gå til case 2, lading
         delay(200);
@@ -260,11 +275,11 @@ void loop(){
       int nyKonto = konto - (percentage * batteriKap * strompris * 0.01); //Reknar ut straumpris
       int nyBatteri = batteri + percentage; //Reknar ut ny batteriprosent
       
-      if(nyKonto<0){ //Dersom kontoen hadde blitt negativ
+      if(nyKonto<0 && batteri>10){ //Dersom kontoen hadde blitt negativ, og batteriet er over 10% frå før
         cases = 2; //Neste case er case 2 igjen
-        feil();//Blinker raudt for å indikere at transasjonen feila
+        feil();//Blinker raudt for å indikere at transaksjonen feila
         feil();}
-      else{ //Ved positiv ny saldo
+      else{ //Ved ny saldo godkjent
         cases = 1; //Går tilbake til case 1 når sekvensen er over
         celebrate(); //Blinker grønt for å indikere at transaksjonen fungerte
         celebrate();
@@ -274,7 +289,9 @@ void loop(){
 
         char batteriString[8]; //Konvertera til rett datatype
         dtostrf(nyBatteri, 1, 2, batteriString);
-        client.publish("esp32/updateBattery", batteriString); //Publsiera ny batteriverdi
+        client.publish("esp32/updateBattery", batteriString); //Publisera ny batteriverdi
+        servo.write(90); //Setter opp bommen
+        delay(1000); //Bruker delay for å vente, da dette ikkje skal påverke andre delar av programmet
         }
       break;
       }
@@ -331,5 +348,5 @@ Rydde i ka som treng å være globale variablar og kva som kan være lokalt
 
 Navngivinga er ganske innafor, men bør sjåast gjennom
 
-Kan legge til at om percentage er 0, so kan kontoen bli negativ
+Legge til kontroll av bommen frå nettside, burde være greit å gjennomføre gjennom http
 */
