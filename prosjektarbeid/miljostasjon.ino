@@ -248,3 +248,6 @@ void loop(){
   }
   delay(500); //Venter litt for å unngå kluss
 }
+
+//Koden inneholder elementer innspirert av denne guiden:
+//https://randomnerdtutorials.com/esp32-mqtt-publish-subscribe-arduino-ide/
