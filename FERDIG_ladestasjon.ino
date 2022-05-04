@@ -350,3 +350,6 @@ Navngivinga er ganske innafor, men bør sjåast gjennom
 
 Legge til kontroll av bommen frå nettside, burde være greit å gjennomføre gjennom http
 */
+
+//Koden til autorisasjonen ved hjelp av RFID er inspierert av denne videoen:
+https://www.youtube.com/watch?v=pJLjFm4Ipro
