@@ -352,4 +352,4 @@ Legge til kontroll av bommen frå nettside, burde være greit å gjennomføre gj
 */
 
 //Koden til autorisasjonen ved hjelp av RFID er inspierert av denne videoen:
-https://www.youtube.com/watch?v=pJLjFm4Ipro
+//https://www.youtube.com/watch?v=pJLjFm4Ipro
