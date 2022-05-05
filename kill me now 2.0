@@ -1,0 +1,223 @@
+
+ 
+//Importering av nødvendige bibliotek
+#include <Wire.h>
+#include <Zumo32U4.h>
+#include <EEPROM.h>                                        //ny
+#include <zumo32U4IMU.h>
+
+Zumo32U4LineSensors lineSensors;
+Zumo32U4Motors motors;
+Zumo32U4LCD display;                                       // kan ta bort
+Zumo32U4Encoders encoders;                                 // ny   
+Zumo32U4ButtonA buttonA; 
+Zumo32U4ButtonB buttonB;
+Zumo32U4ButtonC buttonC;   
+Zumo32U4ProximitySensors proxSensors; // til prox sensor
+Zumo32U4IMU imu;
+
+//Konstander 
+const int16_t maxSpeed = 190; // selvvalgt max hastighet 
+const int grense_hastighet = maxSpeed*0.7;  
+uint16_t cont = 0;
+float strom;
+int forrige_tid = 0;
+int16_t lastError = 0; 
+int data_speed[] =  {};
+int h; 
+int x;
+float hastighet;
+unsigned int lineSensorValues[2];
+int countspermeter = 8195;
+unsigned long now;
+unsigned long wait;
+int StopMillis = 0;
+const int period = 100;
+unsigned long lastMillis = 0;
+int new_battery = 0 ;
+const int period_charge = 1000;
+int cycles = 0;
+int low_battery = 0 ;
+int forrige_hurtighet = 0;
+int i = 1; 
+int last_speed = 0; 
+int level_1_cyles = 0; 
+unsigned long currentMillis;
+int Left_encoder;
+int Right_encoder;
+unsigned long Start;
+unsigned long Stop; 
+int under_five_battery = 0;
+int duration; 
+float max_speed ;
+unsigned long prevMillis = 0;
+
+int battery_health;
+int new_strom = 0; 
+float average_speed;
+
+void use_battery(float hastighet){
+  strom = strom - (0.1 * hastighet); 
+  }
+
+
+void ResetStrom() {
+  if (buttonA.isPressed())
+  {
+    strom = 100; //mah  //ny strom som derretter skal lagres i EEPROM
+    Serial.println("Resett batteri"); 
+  } }
+
+  void Calibrate_linjefolger() {
+
+  //counts øker etter hver irretasjon 
+  for (cont = 0; cont < 120; cont++){
+  //hvis cont er mindre eller lik 20 eller cont større enn 70
+    if (cont > 30 && cont <= 90)
+    {
+      motors.setSpeeds(-200, 200);
+    }
+    else
+    {
+      motors.setSpeeds(200, -200);
+    }
+
+    lineSensors.calibrate();
+      }
+  motors.setSpeeds(0, 0);
+}
+
+void setup() {
+  Serial.begin(9600); //begynne serial. benyttes blandt annet ved printing av verdier o
+  Wire.begin(); //gir oss mulighet til å kommunisere med I2C enheter (IMU)
+  imu.init(); //Set up for inertial sensors
+  display.clear();
+  proxSensors.initThreeSensors(); //definere hvor mange prox vi ønsker å bruke
+  lineSensors.initThreeSensors(); //definere hvor mange linesensor vi ønsker å bruke
+  Calibrate_linjefolger(); //kalibere linesensorene 
+  motors.setSpeeds(0,0); 
+ 
+  EEPROM.begin(); //Lagring av data i EEPROM minnet til ATmega32
+  strom = EEPROM.read(0);// EEPROM skal lese av strom i adresse 0,  
+  battery_health = EEPROM.read(1);      
+}
+
+void loop () {
+   Serial.println("START LOOP");
+  unsigned long currentMillis = millis(); // tar tiden 
+  int16_t position = lineSensors.readLine(lineSensorValues); //leser av 
+
+  int16_t error = position - 1000; //Feilestimat med bare 3 linesensorer 
+  
+  int16_t speedDifference = error /4 + 6 * (error - lastError); //tatt fra eksempelkoden 
+  lastError = error; //oppdatere lasterror 
+  
+  int16_t leftSpeed = maxSpeed + speedDifference;
+  int16_t rightSpeed = maxSpeed - speedDifference;
+
+  leftSpeed = constrain(leftSpeed, 0, maxSpeed);  //tvinger speed i en range 
+  rightSpeed = constrain(rightSpeed, 0, maxSpeed); 
+  motors.setSpeeds(leftSpeed, rightSpeed); //setter hastigheten 
+
+  float sum = 0;
+  
+  for (int h = 0; h < 4; h++) {   
+  int Left_encoder = encoders.getCountsRight(); //Kan få overflow (over 16 bit)
+  int Right_encoder = encoders.getCountsLeft(); //Kan få overflow (over 16 bit)
+
+  float x = ((Left_encoder + Right_encoder) / 2); //  gjennomsnittet av begge encoderene 
+  float distance = (x/countspermeter)*100; //måler distanse den har kjørt i cm, måler i meter
+  float StartMillis = millis(); //Starter tid
+  hastighet = distance/(StartMillis - currentMillis);
+
+  Left_encoder = encoders.getCountsAndResetLeft();
+  Right_encoder = encoders.getCountsAndResetLeft();
+  
+  EEPROM.write(0,strom); //skriver ny stromverdi til minnet
+  EEPROM.update(0, strom); //oppdaterer til den nye stormverdi
+  ResetStrom(); // resete strøm //bare hvis betingelsen er oppfylt
+   
+  
+   float max_speed_now = 0;
+   data_speed[h] = hastighet; 
+   sum = sum + data_speed[h];
+   if (data_speed [h] > max_speed_now)
+   { max_speed_now = data_speed[h];}
+   sum = sum + data_speed[h];
+   Serial.print("h :");
+   Serial.println(h);
+   
+   
+  if (hastighet > 0) {
+    use_battery(hastighet);
+    }
+    while (strom <= 1){
+     motors.setSpeeds(0,0); 
+     ResetStrom(); }               
+ //ny strom som derretter skal lagres i EEPROM}
+// siden strom er en float, vil den endre seg stort sett hele tiden. Nå nå 
+// strommen endre seg med minst 1% for å inisiere en count.
+  if (strom > new_strom +1) { 
+    //Vi oppdaterer new_battery slik ser en endring
+    //hver gang vi gå i løkken vil cyles øke med 1 
+    cycles = cycles + 1;
+    new_strom = strom;
+  }
+  
+  
+ //bruker hastighet fraen tidligere 
+while (hastighet >= grense_hastighet  ) { //hvis hastigheten er over 70 av maxSpeed;
+    unsigned long  Start = millis(); // tar tiden 
+     //vi oppdaterer hastigheten  
+    }
+    
+  unsigned long Stop = millis();//tar stop tiden 
+  int duration = (Stop - Start)/1000; 
+
+ if (strom > 5) {
+    int low_battery = low_battery + 1; }
+
+if (currentMillis-lastMillis > period) 
+{
+   proxSensors.read();
+   int center_left_sensor = proxSensors.countsFrontWithLeftLeds(); 
+   //int center_right_sensor = proxSensors.countsFrontWithRightLeds();
+
+    //forsøker å stoppe dersom den ser en objekt foran seg hvis ikke farten er null 
+
+   while (( center_left_sensor == 6 ) && ( leftSpeed > 0 &&  rightSpeed > 0 )) { 
+       leftSpeed = 1 ; // vill ikke at den skal hoppe ut av løkken 
+       rightSpeed = 1;  // ikke nok motorkraft for få motor til å bevege seg
+       motors.setSpeeds(leftSpeed, rightSpeed);
+       
+
+ proxSensors.read(); // leser av ny verdi for å se hvis betingelsen
+    //er fortsatt gyldig 
+ center_left_sensor = proxSensors.countsFrontWithLeftLeds();
+ lastMillis = millis(); }
+}
+delay(500);}
+
+Serial.println("HER SKAL ALLE VERDIENE PRINTES");
+ average_speed = sum/4;
+
+ battery_health = 100 - 0.05*(average_speed + max_speed + duration + low_battery + cycles);
+  //har lagt egen funksjon, det sto større verdi vi får desto dårligere  // vi har lust å lage en range hvis den overskrider 100; 
+  battery_health = constrain(battery_health, 0, 100); 
+  // vil ha 0 = dårlig battery health og 100 = bra battery
+  Serial.print("strom : ");
+  Serial.println(strom);
+  Serial.print("hastighet :");
+  Serial.println(hastighet);
+  Serial.print("average :");
+  Serial.println(average_speed);
+  Serial.print("max_speed :");
+  Serial.println(max_speed);
+  Serial.print("low_battery :");
+  Serial.println(low_battery);
+  Serial.print("cycles :");
+  Serial.println(cycles);
+  Serial.print("Duration :");
+  Serial.println(duration);
+  Serial.println(battery_health);
+ 
